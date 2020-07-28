@@ -22,7 +22,9 @@ namespace PAYPAYPAY.Controllers
     {
         private static Logger _logger = LogManager.GetCurrentClassLogger();
         private static _3PayService PayService = new _3PayService();
-        private string cerpath = ConfigurationManager.AppSettings["cerpath"];
+        private string _cerpath = ConfigurationManager.AppSettings["cerpath"];
+        private string _STOREID = ConfigurationManager.AppSettings["STOREID"];
+        private string _CUBKEY = ConfigurationManager.AppSettings["CUBKEY"];
 
         [Route("APP")]
         [HttpPost]
@@ -34,8 +36,10 @@ namespace PAYPAYPAY.Controllers
                 //TokenPayServiceClient client = new TokenPayServiceClient();
                 //client.TokenPay
                 string StrBody = JsonConvert.SerializeObject(body);
-                string STOREID = "990230053";
-                string CUBKEY = "2222222222";
+                //string STOREID = "990230053";//測試環境
+                //string CUBKEY = "2222222222";
+                string STOREID = _STOREID;//正式環境 測試帳號
+                string CUBKEY = _CUBKEY;
                 _logger.Debug("GOOGLE PAY Payload Request : " + StrBody);
                 _logger.Debug(" Payload Request : " + body.payload);
                 string ORDERNUMBER = "TEST" + DateTime.Now.ToString("MMddhhmmss");
@@ -137,116 +141,7 @@ namespace PAYPAYPAY.Controllers
         }
 
 
-        [Route("ApplePay")]
-        [HttpPost]
-        public IHttpActionResult ApplePay([FromBody]paymentDataRequest body)
-        {
-
-            try
-            {
-                //TokenPayServiceClient client = new TokenPayServiceClient();
-                //client.TokenPay
-                string StrBody = JsonConvert.SerializeObject(body);
-                string STOREID = "990230053";
-                string CUBKEY = "2222222222";
-                _logger.Debug("GOOGLE PAY Payload Request : " + StrBody);
-                _logger.Debug(" Payload Request : " + body.payload);
-                string ORDERNUMBER = "TEST" + DateTime.Now.ToString("MMddhhmmss");
-                /*
-                TokenPayServiceRequest Request = new TokenPayServiceRequest();
-                Request.MSGID = "TRS0001";
-                Request.AUTHORDERINFO.STOREID = STOREID;
-                Request.AUTHORDERINFO.ORDERNUMBER = "test000001";
-                Request.AUTHORDERINFO.AMOUNT = body.totalPrice;
-                Request.AUTHORDERINFO.PAYIN = "2";
-                //STOREID + ORDERNUMBER + AMOUNT + CUBKEY
-                Request.CAVALUE = PayService.ToMD5(Request.AUTHORDERINFO.STOREID + Request.AUTHORDERINFO.ORDERNUMBER + Request.AUTHORDERINFO.AMOUNT + CUBKEY);
-                */
-                PAYMENTDATA paymentdata = new PAYMENTDATA();
-                paymentdata.payload = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(body.payload.ToString()));
-                paymentdata.transtype = "GGP"; //ApplePay：APP GoogoePay：GGP SamsungPay：SSP
-                paymentdata.transdatetime = DateTime.Now.ToString("yyyy/MM/dd hh:mm:ss");
-                paymentdata.deviceinfo = "Google Pay Test " + DateTime.Now.ToString("yyyyMMddhhmmss");
-                //body.AUTHORDERINFO.PAYMENTDATA = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(paymentdata)));
-                //Request.AUTHORDERINFO.PAYMENTDATA = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(paymentdata)));
-
-
-                /// sample
-
-                //TokenPayServiceClient objTokenPayServiceClient = new TokenPayServiceClient();
-
-                tempuri.org.TokenPayServiceRequest objTokenPayServiceRequest = new tempuri.org.TokenPayServiceRequest();
-
-
-                tempuri.org.TokenCardAuthRequest objTokenCardAuthRequest = new tempuri.org.TokenCardAuthRequest();
-                objTokenCardAuthRequest.MSGID = tempuri.org.AUTHMSGID.TRS0001;
-                objTokenCardAuthRequest.CAVALUE = PayService.ToMD5(STOREID + ORDERNUMBER + body.totalPrice + CUBKEY);
-
-                tempuri.org.TokenPayAuthInfoMerchant objTokenPayAuthInfoMerchant = new tempuri.org.TokenPayAuthInfoMerchant();
-                objTokenPayAuthInfoMerchant.STOREID = STOREID;
-                objTokenPayAuthInfoMerchant.ORDERNUMBER = ORDERNUMBER;
-                objTokenPayAuthInfoMerchant.AMOUNT = body.totalPrice;
-                objTokenPayAuthInfoMerchant.PAYIN = "2";
-                //string strPAYMENTDATA = "{\"payload\": \"payload\",\"transtype\": \"transtype\",\"transdatetime\": \"YYYY /MM/DD HH:mm:ss\",\"deviceinfo\": \"使用者裝置資訊\"}";
-                objTokenPayAuthInfoMerchant.PAYMENTDATA = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(paymentdata))); ;
-
-                objTokenCardAuthRequest.AUTHORDERINFO = objTokenPayAuthInfoMerchant;
-
-                objTokenPayServiceRequest.MERCHANT = objTokenCardAuthRequest;
-
-                _logger.Debug("PayService Request : " + PayService.Serialize(objTokenPayServiceRequest));
-                _logger.Debug("JsonConvert Request : " + JsonConvert.SerializeObject(objTokenPayServiceRequest));
-
-                tempuri.org.TokenPayServiceResponse objTokenPayServiceResponse = new tempuri.org.TokenPayServiceResponse();
-                TokenPayServiceClient objTokenPayServiceClient = new TokenPayServiceClient();
-                objTokenPayServiceResponse = objTokenPayServiceClient.TokenPay(objTokenPayServiceRequest);
-
-                string MSGID = objTokenPayServiceResponse.CUB.MSGID.ToString();
-                _logger.Debug("MSGID : " + MSGID);
-                _logger.Debug("JsonConvert AUTHORDERINFO : " + JsonConvert.SerializeObject(objTokenPayServiceResponse));
-                /*
-
-                string CAVALUE = objTokenPayServiceResponse.CUB.CAVALUE.ToString();
-                string PAYTYPE = objTokenPayServiceResponse.CUB.PAYMENTTYPE.ToString();
-                string STOREID2 = objTokenPayServiceResponse.CUB.AUTHORDERINFO.STOREID;
-                string CAVALUE2 = PayService.ToMD5(objTokenPayServiceResponse.CUB.AUTHORDERINFO.STOREID +
-                    objTokenPayServiceResponse.CUB.AUTHORDERINFO.ORDERNUMBER +
-                    objTokenPayServiceResponse.CUB.AUTHORDERINFO.AMOUNT +
-                    objTokenPayServiceResponse.CUB.AUTHORDERINFO.AUTHSTATUS +
-                    objTokenPayServiceResponse.CUB.AUTHORDERINFO.AUTHCODE + CUBKEY);
-
-                //objTokenPayServiceClient.Close();
-                ///sample
-
-                //string XMLbody = PayService.Serialize(Request);
-
-                
-                _logger.Debug("CAVALUE : " + CAVALUE);
-                _logger.Debug("CAVALUE MD5 : " + CAVALUE2);
-                _logger.Debug("PAYTYPE : " + PAYTYPE);
-                _logger.Debug("STOREID2 : " + STOREID2);
-                _logger.Debug("AUTHSTATUS : " + objTokenPayServiceResponse.CUB.AUTHORDERINFO.AUTHSTATUS);
-                
-                _logger.Debug("XML AUTHORDERINFO : " + PayService.Serialize(objTokenPayServiceResponse));
-                _logger.Debug("JsonConvert AUTHORDERINFO : " + JsonConvert.SerializeObject(objTokenPayServiceResponse));
-                _logger.Debug("AUTHORDERINFO : " + JsonConvert.SerializeObject(objTokenPayServiceResponse.CUB.AUTHORDERINFO));
-                */
-            }
-            catch (Exception e)
-            {
-                _logger.Debug("Exception : " + e);
-            }
-
-            //string XMLResponse = PayService.SendRequest(XMLbody);
-
-            //_logger.Debug("APP XML : " + XMLResponse);
-
-
-
-
-            return Ok(new ApiResult<object>());
-        }
-
+        
 
         [Route("ApplePaySession")]
         [HttpPost]
@@ -254,6 +149,122 @@ namespace PAYPAYPAY.Controllers
         {
             _logger.Debug("===Apple Pay STAR===");
             string url = urlreq.url;
+            _logger.Debug("url = " + url);
+            _logger.Debug(Path.GetFullPath(_cerpath));
+            #region Load certificate
+            //var certificate = new X509Certificate2(cerpath);
+            //var certificate = new X509Certificate2(cerpath);
+            ////var certificate = new X509Certificate2("D:\\Dropbox\\GMP\\merchant.asia.gomypay.applepay.cer");
+            //_logger.Debug(certificate.ToString());
+            #endregion
+
+            try
+            {
+
+                #region Load certificate
+                var certificate = new X509Certificate2(_cerpath);                
+                _logger.Debug(certificate.ToString());
+                #endregion
+                /*
+                HttpClientHandler handler = new HttpClientHandler();
+                handler.ClientCertificates.Add(certificate);
+                //handler.SslProtocols = SslProtocols.Tls12;
+                //handler.SslProtocols = SslProtocols.Tls12;
+
+                if (url.StartsWith("https", StringComparison.OrdinalIgnoreCase))
+                {
+                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+                    ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(CheckValidationResult);
+                    //request = WebRequest.Create(url) as HttpWebRequest;
+                    //request.ProtocolVersion = HttpVersion.Version10;
+                }
+                else
+                {
+                    //request = WebRequest.Create(url) as HttpWebRequest;
+                }
+                */
+                /*
+                if (url.StartsWith("https", StringComparison.OrdinalIgnoreCase))
+                {
+                    ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+                    ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(CheckValidationResult);
+                    request = WebRequest.Create(url) as HttpWebRequest;
+                    request.ProtocolVersion = HttpVersion.Version10;
+                }
+                else
+                {
+                    request = WebRequest.Create(url) as HttpWebRequest;
+                }
+                */
+                var payload = new
+                {
+                    merchantIdentifier = "merchant.asia.gomypay.applepay",// 請填入您申請的Apple Pay Merchant Identifier
+                    domainName = "cathay.gomytw.com",// 請填入您的網站Domain(需與Apple開發者帳號中設定相同)
+                    displayName = "GomyPay"// 請填入您想顯示的商店名稱
+                };
+                string strPayLoad = JsonConvert.SerializeObject(payload);
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url);
+                request.Method = WebRequestMethods.Http.Post;
+                request.ContentType = "application/json";
+                request.ContentLength = strPayLoad.Length;
+                request.ClientCertificates.Add(certificate); // 加入憑證
+                using (StreamWriter sw = new StreamWriter(request.GetRequestStream()))
+                {
+                    sw.Write(strPayLoad);
+                    sw.Flush();
+                    sw.Close();
+                }
+                //using (var httpResponse = (HttpWebResponse)request.GetResponse())
+                //using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+                //{
+                //    var result = streamReader.ReadToEnd();
+                //    result.Dump();
+                //}
+                return "true";
+
+                /*
+                var http = new HttpClient(handler);
+                http.DefaultRequestHeaders.Add("Accept", "application/json");
+
+                _logger.Debug(http.ToString());
+                var options = new MerchantSessionRequest()
+                {
+                    MerchantIdentifier = "merchant.asia.gomypay.applepay",
+                    DisplayName = "GomyPay",
+                    Initiative = "web",
+                    InitiativeContext = "cathay.gomytw.com"
+                };
+
+                var json = JsonConvert.SerializeObject(options);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = content
+                };
+
+                _logger.Debug(request.ToString());
+
+                HttpResponseMessage response = await http.SendAsync(request);
+                response.EnsureSuccessStatusCode();
+
+                var result = await response.Content.ReadAsStringAsync();
+                return result;*/
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex);
+                return ex.ToString();
+            }
+        }
+
+        [Route("Get")]
+        [HttpGet]
+        public async Task<string> Get(string url)//GetAsync([FromBody]AppleReq urlreq)
+        {
+            _logger.Debug("===Apple Pay STAR===");
+            //string url = urlreq.url;
             _logger.Debug("url = " + url);
             //_logger.Debug(Path.GetFullPath(cerpath));
             #region Load certificate
@@ -266,7 +277,7 @@ namespace PAYPAYPAY.Controllers
             try
             {
                 #region Load certificate
-                var certificate = new X509Certificate2(cerpath);                
+                var certificate = new X509Certificate2(_cerpath);
                 _logger.Debug(certificate.ToString());
                 #endregion
 
@@ -275,7 +286,7 @@ namespace PAYPAYPAY.Controllers
                 //handler.SslProtocols = SslProtocols.Tls12;
                 //handler.SslProtocols = SslProtocols.Tls12;
 
-                
+
 
                 if (url.StartsWith("https", StringComparison.OrdinalIgnoreCase))
                 {
@@ -337,6 +348,9 @@ namespace PAYPAYPAY.Controllers
                 return ex.ToString();
             }
         }
+
+
+
 
         private static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
         {

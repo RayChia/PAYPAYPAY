@@ -18,34 +18,14 @@
     <div class="apple-pay-button" onclick="applePayButtonClicked()">
     </div>
     <script>
-        /*
- Copyright (C) 2016 Apple Inc. All Rights Reserved.
- See LICENSE.txt for this sample’s licensing information
- Abstract:
- The main client-side JS. Handles displaying the Apple Pay button and requesting a payment.
- */
-
-        /**
-         * This method is called when the page is loaded.
-         * We use it to show the Apple Pay button as appropriate.
-         * Here we're using the ApplePaySession.canMakePayments() method,
-         * which performs a basic hardware check.
-         *
-         * If we wanted more fine-grained control, we could use
-         * ApplePaySession.canMakePaymentsWithActiveCards() instead.
-         */
         console.log("Apple Pay Start");
         /*
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("Apple Pay 1");
             if (window.ApplePaySession) {
-                console.log("Apple Pay 2");
                 console.log(window.ApplePaySession);
                 if (ApplePaySession.canMakePayments()) {
-                    console.log("Apple Pay 3");
                     console.log(ApplePaySession.canMakePayments);
                     showApplePayButton();
-                    console.log("Apple Pay 4");
                 }
             }
         });
@@ -84,7 +64,7 @@
 
         function showApplePayButton() {
             HTMLCollection.prototype[Symbol.iterator] = Array.prototype[Symbol.iterator];
-            const buttons = document.getElementsByClassName("apple-pay-button");
+            var buttons = document.getElementsByClassName("apple-pay-button");
             for (let button of buttons) {
                 button.className += " visible";
             }
@@ -98,20 +78,19 @@
          */
         function applePayButtonClicked() {
             console.log("apple pay button clicked");
-            const paymentRequest = {
-                countryCode: 'TW',
-                currencyCode: 'TWD',
+            var paymentRequest = {
+                //countryCode: 'TW',
+                //currencyCode: 'TWD',
                 supportedNetworks: ['masterCard', 'visa'],
                 merchantCapabilities: ['supports3DS'],
                 total: {
                     label: 'Pay for GomyPay !!',
-                    type: 'final',
                     amount: '5',
                 }
 
             };
 
-            const session = new ApplePaySession(2, paymentRequest);
+            var session = new ApplePaySession(2, paymentRequest);
             console.log("session object created")
 
             session.oncancel = (event) => {
@@ -123,8 +102,9 @@
              * Merchant Validation
              * We call our merchant session endpoint, passing the URL to use
              */
-            session.onvalidatemerchant = (event) => {
-                const validationURL = event.validationURL;
+            /*
+           session.onvalidatemerchant = (event) => {
+                var validationURL = event.validationURL;
                 alert(validationURL);
                 console.log("validation url=" + validationURL);
                 getApplePaySession(validationURL).then(function (response) {
@@ -132,45 +112,33 @@
                     console.log(response);
                     session.completeMerchantValidation(response);
                 });
-            };
+            };*/
 
-            /**
-             * Shipping Method Selection
-             * If the user changes their chosen shipping method we need to recalculate
-             * the total price. We can use the shipping method identifier to determine
-             * which method was selected.
-             */
+            session.onvalidatemerchant = function (event) {
+                var data = {
+                    urlreq: event.validationURL
+                };
+                alert(data.urlreq);
+                console.log(data.urlreq);
+                /* 將validationURL拋到Server端，由Server端與Apple Server做商店驗證 */
+                $.ajax({
+                    url: 'ApplePaySession',
+                    method: "POST",
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify(data)
+                }).then(function (merchantSession) {
+                    /* 後端驗證成功取得Merchant Session物件後，將物件pass給ApplePaySession */
+                    session.completeMerchantValidation(JSON.parse(merchantSession));
+                });
+            };
 
-            /*
-             session.onshippingmethodselected = (event) => {
-                console.log("onshippingmethodselected");
-                // const shippingCost = event.shippingMethod.identifier === 'free' ? '0.00' : '5.00';
-                // const totalCost = event.shippingMethod.identifier === 'free' ? '8.99' : '13.99';
-                //
-                // const lineItems = [
-                //     {
-                //         label: 'Shipping',
-                //         amount: shippingCost,
-                //     },
-                // ];
-                //
-                // const total = {
-                //     label: 'Apple Pay Example',
-                //     amount: totalCost,
-                // };
-                //
-                // session.completeShippingMethodSelection(ApplePaySession.STATUS_SUCCESS, total, lineItems);
-            };
-            */
-
+            
             /**
              * Payment Authorization
              * Here you receive the encrypted payment data. You would then send it
              * on to your payment provider for processing, and return an appropriate
              * status in session.completePayment()
-             */
-
-            
+             */            
             session.onpaymentauthorized = (event) => {
                 console.log("==onpaymentauthorized==");
                 // Send payment for processing...
